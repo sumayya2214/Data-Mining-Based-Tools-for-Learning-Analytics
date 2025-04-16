@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Network Mining</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        header {
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            padding: 1rem 0;
+        }
+        main {
+            margin: 2rem auto;
+            max-width: 800px;
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .form-section {
+            margin-bottom: 1.5rem;
+        }
+        .form-section label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        .form-section select {
+            width: 100%;
+            padding: 0.5rem;
+            margin-bottom: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        .results {
+            background: #f9f9f9;
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-top: 1.5rem;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        footer {
+            text-align: center;
+            margin-top: 2rem;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Social Network Mining Dashboard</h1>
+    </header>
+    <main>
+        <h2>Model Training Interface</h2>
+        <p>Select your features and targets to train classification and regression models.</p>
+
+        <div class="form-section">
+            <label for="features">Select Features for Modeling:</label>
+            <select name="features" id="features" multiple>
+                {% for column in numerical_columns %}
+                    <option value="{{ column }}">{{ column }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-section">
+            <label for="target_class">Select Target for Classification:</label>
+            <select name="target_class" id="target_class">
+                {% for column in categorical_columns %}
+                    <option value="{{ column }}">{{ column }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-section">
+            <label for="target_reg">Select Target for Regression:</label>
+            <select name="target_reg" id="target_reg">
+                {% for column in numerical_columns %}
+                    <option value="{{ column }}">{{ column }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <button onclick="runModels()">Run Models</button>
+
+        <div class="results" id="results">
+            <h2>Results</h2>
+            <p>No results yet. Click "Run Models" to see the output.</p>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Social Network Mining Project</p>
+    </footer>
+
+    <script>
+        async function runModels() {
+            // Get selected features, classification, and regression targets
+            const features = Array.from(document.getElementById('features').selectedOptions).map(option => option.value);
+            const targetClass = document.getElementById('target_class').value;
+            const targetReg = document.getElementById('target_reg').value;
+
+            if (features.length === 0 || !targetClass || !targetReg) {
+                document.getElementById('results').innerHTML = "<p style='color: red;'>Please select features, a classification target, and a regression target!</p>";
+                return;
+            }
+
+            // Send the data to the Flask backend
+            const response = await fetch('/run_models', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ features, target_class: targetClass, target_reg: targetReg })
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                document.getElementById('results').innerHTML = `
+                    <h2>Results</h2>
+                    <p><strong>Classification Metrics:</strong> ${JSON.stringify(result.classification_metrics)}</p>
+                    <p><strong>Regression Metrics:</strong> ${JSON.stringify(result.regression_metrics)}</p>
+                `;
+            } else {
+                document.getElementById('results').innerHTML = "<p style='color: red;'>An error occurred while running the models. Please try again.</p>";
+            }
+        }
+    </script>
+</body>
+</html>
